@@ -1,6 +1,8 @@
 package com.example.myinstructions.ui.tasklist
 
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -39,6 +41,14 @@ class TaskListFragment : Fragment() {
 
         binding.recyclerTasks.layoutManager = LinearLayoutManager(requireContext())
         binding.recyclerTasks.adapter = adapter
+
+        binding.editSearch.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: Editable?) {
+                viewModel.setSearchQuery(s?.toString() ?: "")
+            }
+        })
 
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
