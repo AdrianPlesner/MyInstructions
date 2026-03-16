@@ -3,26 +3,43 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/nav_graph"
-    app:startDestination="@id/FirstFragment">
+    app:startDestination="@id/TaskListFragment">
 
     <fragment
-        android:id="@+id/FirstFragment"
-        android:name="com.example.myinstructions.FirstFragment"
-        android:label="@string/first_fragment_label"
-        tools:layout="@layout/fragment_first">
-
+        android:id="@+id/TaskListFragment"
+        android:name="com.example.myinstructions.ui.tasklist.TaskListFragment"
+        android:label="@string/task_list_title"
+        tools:layout="@layout/fragment_task_list">
         <action
-            android:id="@+id/action_FirstFragment_to_SecondFragment"
-            app:destination="@id/SecondFragment" />
+            android:id="@+id/action_TaskList_to_TaskDetail"
+            app:destination="@id/TaskDetailFragment" />
+        <action
+            android:id="@+id/action_TaskList_to_TaskCreate"
+            app:destination="@id/TaskCreateFragment" />
     </fragment>
+
     <fragment
-        android:id="@+id/SecondFragment"
-        android:name="com.example.myinstructions.SecondFragment"
-        android:label="@string/second_fragment_label"
-        tools:layout="@layout/fragment_second">
-
+        android:id="@+id/TaskDetailFragment"
+        android:name="com.example.myinstructions.ui.taskdetail.TaskDetailFragment"
+        android:label="@string/task_detail_title"
+        tools:layout="@layout/fragment_task_detail">
+        <argument
+            android:name="taskId"
+            app:argType="long" />
         <action
-            android:id="@+id/action_SecondFragment_to_FirstFragment"
-            app:destination="@id/FirstFragment" />
+            android:id="@+id/action_TaskDetail_to_TaskCreate"
+            app:destination="@id/TaskCreateFragment" />
     </fragment>
+
+    <fragment
+        android:id="@+id/TaskCreateFragment"
+        android:name="com.example.myinstructions.ui.taskcreate.TaskCreateFragment"
+        android:label="@string/create_task_title"
+        tools:layout="@layout/fragment_task_create">
+        <argument
+            android:name="taskId"
+            app:argType="long"
+            android:defaultValue="-1L" />
+    </fragment>
+
 </navigation>
