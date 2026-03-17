@@ -46,23 +46,24 @@ class TaskListViewModel(application: Application) : AndroidViewModel(application
         if (query.isNotBlank()) {
             return@combine allTasksWithInstructions.mapNotNull { twi ->
                 val titleMatch = twi.task.name.contains(query, ignoreCase = true)
-                val matchingInstr = twi.instructions.firstOrNull {
-                    it.text.contains(query, ignoreCase = true)
-                }
+                val matchingInstrs = twi.instructions
+                    .filter { it.text.contains(query, ignoreCase = true) }
+                    .sortedBy { it.orderIndex }
+                    .map { it.text }
                 when {
-                    titleMatch -> Triple(2, twi, matchingInstr?.text)
-                    matchingInstr != null -> Triple(1, twi, matchingInstr.text)
+                    titleMatch -> Triple(2, twi, matchingInstrs)
+                    matchingInstrs.isNotEmpty() -> Triple(1, twi, matchingInstrs)
                     else -> null
                 }
             }
                 .sortedByDescending { it.first }
-                .map { (_, twi, matchText) ->
+                .map { (_, twi, matchTexts) ->
                     ListItem.TaskRow(
                         TaskItem(
                             id = twi.task.id,
                             name = twi.task.name,
                             instructionCount = twi.instructions.size,
-                            matchingInstruction = matchText
+                            matchingInstructions = matchTexts
                         )
                     )
                 }

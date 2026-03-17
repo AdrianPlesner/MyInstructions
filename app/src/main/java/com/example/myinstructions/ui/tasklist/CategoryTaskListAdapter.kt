@@ -3,6 +3,8 @@ package com.example.myinstructions.ui.tasklist
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.LinearLayout
+import android.widget.TextView
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
@@ -111,12 +113,30 @@ class CategoryTaskListAdapter(
             binding.textTaskName.text = item.name
             binding.textInstructionCount.text =
                 binding.root.context.getString(R.string.instructions_count, item.instructionCount)
-            if (item.matchingInstruction != null) {
-                binding.textMatchingInstruction.text = item.matchingInstruction
-                binding.textMatchingInstruction.visibility = View.VISIBLE
+
+            val container = binding.containerMatchingInstructions
+            container.removeAllViews()
+            if (item.matchingInstructions.isNotEmpty()) {
+                container.visibility = View.VISIBLE
+                val context = binding.root.context
+                for (text in item.matchingInstructions) {
+                    val tv = TextView(context).apply {
+                        layoutParams = LinearLayout.LayoutParams(
+                            LinearLayout.LayoutParams.MATCH_PARENT,
+                            LinearLayout.LayoutParams.WRAP_CONTENT
+                        ).apply { topMargin = 4 }
+                        setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodySmall)
+                        setTypeface(typeface, android.graphics.Typeface.ITALIC)
+                        maxLines = 2
+                        ellipsize = android.text.TextUtils.TruncateAt.END
+                        this.text = context.getString(R.string.matching_instruction_prefix, text)
+                    }
+                    container.addView(tv)
+                }
             } else {
-                binding.textMatchingInstruction.visibility = View.GONE
+                container.visibility = View.GONE
             }
+
             binding.root.setOnClickListener { onTaskClick(item) }
         }
     }

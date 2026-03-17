@@ -12,7 +12,7 @@ data class TaskItem(
     val id: Long,
     val name: String,
     val instructionCount: Int,
-    val matchingInstruction: String? = null
+    val matchingInstructions: List<String> = emptyList()
 )
 
 class TaskListAdapter(
