@@ -1,6 +1,7 @@
 package com.example.myinstructions
 
 import android.os.Bundle
+import android.view.Menu
 import androidx.appcompat.app.AppCompatActivity
 import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
@@ -9,7 +10,6 @@ import androidx.navigation.ui.setupActionBarWithNavController
 import com.example.myinstructions.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
-
     private lateinit var appBarConfiguration: AppBarConfiguration
     private lateinit var binding: ActivityMainBinding
 
@@ -35,6 +35,11 @@ class MainActivity : AppCompatActivity() {
         binding.fab.setOnClickListener {
             navController.navigate(R.id.action_TaskList_to_TaskCreate)
         }
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        menuInflater.inflate(R.menu.menu_main, menu)
+        return true
     }
 
     override fun onSupportNavigateUp(): Boolean {

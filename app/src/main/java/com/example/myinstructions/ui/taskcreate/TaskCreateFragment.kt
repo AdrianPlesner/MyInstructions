@@ -9,12 +9,19 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.myinstructions.R
+import com.example.myinstructions.data.entity.CategoryEntity
 import com.example.myinstructions.databinding.FragmentTaskCreateBinding
 import com.example.myinstructions.util.ImageStorageHelper
+import com.google.android.material.chip.Chip
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.launch
 
 class TaskCreateFragment : Fragment() {
 
@@ -98,6 +105,17 @@ class TaskCreateFragment : Fragment() {
             }
         )
 
+        // Category chips
+        setupCategoryChips()
+
+        binding.buttonAddCategory.setOnClickListener {
+            val name = binding.editNewCategory.text?.toString()?.trim() ?: ""
+            if (name.isEmpty()) return@setOnClickListener
+            viewModel.createCategoryInline(name) {
+                binding.editNewCategory.text?.clear()
+            }
+        }
+
         binding.buttonAddInstruction.setOnClickListener {
             adapter.addInstruction()
         }
@@ -122,6 +140,36 @@ class TaskCreateFragment : Fragment() {
             }
         } else {
             adapter.addInstruction()
+        }
+    }
+
+    private fun setupCategoryChips() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                combine(
+                    viewModel.allCategories,
+                    viewModel.selectedCategoryIds
+                ) { categories, selectedIds ->
+                    categories to selectedIds
+                }.collect { (categories, selectedIds) ->
+                    rebuildChips(categories, selectedIds)
+                }
+            }
+        }
+    }
+
+    private fun rebuildChips(categories: List<CategoryEntity>, selectedIds: Set<Long>) {
+        binding.chipGroupCategories.removeAllViews()
+        for (category in categories) {
+            val chip = Chip(requireContext()).apply {
+                text = category.name
+                isCheckable = true
+                isChecked = category.id in selectedIds
+                setOnCheckedChangeListener { _, _ ->
+                    viewModel.toggleCategory(category.id)
+                }
+            }
+            binding.chipGroupCategories.addView(chip)
         }
     }
 
