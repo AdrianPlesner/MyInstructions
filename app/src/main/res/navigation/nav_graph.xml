@@ -16,6 +16,9 @@
         <action
             android:id="@+id/action_TaskList_to_TaskCreate"
             app:destination="@id/TaskCreateFragment" />
+        <action
+            android:id="@+id/action_TaskList_to_CategoryManage"
+            app:destination="@id/CategoryManageFragment" />
     </fragment>
 
     <fragment
@@ -41,5 +44,11 @@
             app:argType="long"
             android:defaultValue="-1L" />
     </fragment>
+
+    <fragment
+        android:id="@+id/CategoryManageFragment"
+        android:name="com.example.myinstructions.ui.category.CategoryManageFragment"
+        android:label="@string/manage_categories_title"
+        tools:layout="@layout/fragment_category_manage" />
 
 </navigation>

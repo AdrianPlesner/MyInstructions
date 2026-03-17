@@ -31,6 +31,9 @@ interface TaskDao {
     @Update
     suspend fun update(task: TaskEntity)
 
+    @Query("UPDATE task SET lastViewedAt = :timestamp WHERE id = :taskId")
+    suspend fun touchLastViewed(taskId: Long, timestamp: Long = System.currentTimeMillis())
+
     @Query("DELETE FROM task WHERE id = :taskId")
     suspend fun deleteById(taskId: Long)
 }

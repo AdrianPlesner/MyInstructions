@@ -4,8 +4,12 @@ import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.LayoutInflater
+import android.view.Menu
+import android.view.MenuInflater
+import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.view.MenuProvider
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
@@ -34,10 +38,49 @@ class TaskListFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val adapter = TaskListAdapter { task ->
-            val bundle = Bundle().apply { putLong("taskId", task.id) }
-            findNavController().navigate(R.id.action_TaskList_to_TaskDetail, bundle)
-        }
+        requireActivity().addMenuProvider(object : MenuProvider {
+            override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
+                menu.findItem(R.id.action_manage_categories)?.isVisible = true
+                menu.findItem(R.id.action_sort)?.isVisible = true
+            }
+
+            override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
+                return when (menuItem.itemId) {
+                    R.id.action_manage_categories -> {
+                        findNavController().navigate(R.id.action_TaskList_to_CategoryManage)
+                        true
+                    }
+                    R.id.action_sort -> {
+                        viewModel.toggleSortMode()
+                        requireActivity().invalidateOptionsMenu()
+                        true
+                    }
+                    else -> false
+                }
+            }
+
+            override fun onPrepareMenu(menu: Menu) {
+                menu.findItem(R.id.action_manage_categories)?.isVisible = true
+                menu.findItem(R.id.action_sort)?.apply {
+                    isVisible = true
+                    // Show the option to switch TO the other mode
+                    title = when (viewModel.sortMode.value) {
+                        SortMode.CATEGORY -> getString(R.string.sort_by_recent)
+                        SortMode.RECENT -> getString(R.string.sort_by_category)
+                    }
+                }
+            }
+        }, viewLifecycleOwner, Lifecycle.State.RESUMED)
+
+        val adapter = CategoryTaskListAdapter(
+            onTaskClick = { task ->
+                val bundle = Bundle().apply { putLong("taskId", task.id) }
+                findNavController().navigate(R.id.action_TaskList_to_TaskDetail, bundle)
+            },
+            onHeaderClick = { categoryId ->
+                viewModel.toggleCategory(categoryId)
+            }
+        )
 
         binding.recyclerTasks.layoutManager = LinearLayoutManager(requireContext())
         binding.recyclerTasks.adapter = adapter
@@ -52,9 +95,9 @@ class TaskListFragment : Fragment() {
 
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.tasks.collect { tasks ->
-                    adapter.submitList(tasks)
-                    binding.textEmpty.visibility = if (tasks.isEmpty()) View.VISIBLE else View.GONE
+                viewModel.listItems.collect { items ->
+                    adapter.submitList(items)
+                    binding.textEmpty.visibility = if (items.isEmpty()) View.VISIBLE else View.GONE
                 }
             }
         }
