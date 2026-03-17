@@ -11,6 +11,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.example.myinstructions.R
 import com.example.myinstructions.databinding.FragmentTaskCreateBinding
 import com.example.myinstructions.util.ImageStorageHelper
@@ -73,6 +74,29 @@ class TaskCreateFragment : Fragment() {
 
         binding.recyclerInstructionsEdit.layoutManager = LinearLayoutManager(requireContext())
         binding.recyclerInstructionsEdit.adapter = adapter
+
+        // When a text field gains focus, scroll its card to the top of the visible area
+        binding.recyclerInstructionsEdit.addOnChildAttachStateChangeListener(
+            object : RecyclerView.OnChildAttachStateChangeListener {
+                override fun onChildViewAttachedToWindow(view: View) {
+                    val editText = view.findViewById<View>(R.id.edit_instruction_text)
+                    editText?.setOnFocusChangeListener { v, hasFocus ->
+                        if (hasFocus) {
+                            v.post {
+                                val scrollView = binding.root
+                                val location = IntArray(2)
+                                view.getLocationInWindow(location)
+                                val scrollViewLocation = IntArray(2)
+                                scrollView.getLocationInWindow(scrollViewLocation)
+                                val scrollY = location[1] - scrollViewLocation[1] + scrollView.scrollY
+                                scrollView.smoothScrollTo(0, scrollY)
+                            }
+                        }
+                    }
+                }
+                override fun onChildViewDetachedFromWindow(view: View) {}
+            }
+        )
 
         binding.buttonAddInstruction.setOnClickListener {
             adapter.addInstruction()
