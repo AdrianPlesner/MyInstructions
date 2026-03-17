@@ -63,7 +63,8 @@ class TaskListViewModel(application: Application) : AndroidViewModel(application
                             id = twi.task.id,
                             name = twi.task.name,
                             instructionCount = twi.instructions.size,
-                            matchingInstructions = matchTexts
+                            matchingInstructions = matchTexts,
+                            searchQuery = query
                         )
                     )
                 }

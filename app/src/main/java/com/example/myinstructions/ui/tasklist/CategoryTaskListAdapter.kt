@@ -11,6 +11,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.myinstructions.R
 import com.example.myinstructions.databinding.ItemCategoryHeaderBinding
 import com.example.myinstructions.databinding.ItemTaskBinding
+import com.example.myinstructions.util.HighlightHelper
 
 sealed class ListItem {
     data class CategoryHeader(
@@ -110,7 +111,7 @@ class CategoryTaskListAdapter(
         RecyclerView.ViewHolder(binding.root) {
 
         fun bind(item: TaskItem) {
-            binding.textTaskName.text = item.name
+            binding.textTaskName.text = HighlightHelper.highlight(item.name, item.searchQuery)
             binding.textInstructionCount.text =
                 binding.root.context.getString(R.string.instructions_count, item.instructionCount)
 
@@ -119,7 +120,10 @@ class CategoryTaskListAdapter(
             if (item.matchingInstructions.isNotEmpty()) {
                 container.visibility = View.VISIBLE
                 val context = binding.root.context
+                val prefix = context.getString(R.string.matching_instruction_prefix, "")
                 for (text in item.matchingInstructions) {
+                    val fullText = context.getString(R.string.matching_instruction_prefix, text)
+                    val highlighted = HighlightHelper.highlight(fullText, item.searchQuery)
                     val tv = TextView(context).apply {
                         layoutParams = LinearLayout.LayoutParams(
                             LinearLayout.LayoutParams.MATCH_PARENT,
@@ -129,7 +133,7 @@ class CategoryTaskListAdapter(
                         setTypeface(typeface, android.graphics.Typeface.ITALIC)
                         maxLines = 2
                         ellipsize = android.text.TextUtils.TruncateAt.END
-                        this.text = context.getString(R.string.matching_instruction_prefix, text)
+                        this.text = highlighted
                     }
                     container.addView(tv)
                 }
