@@ -1,6 +1,7 @@
 package com.example.myinstructions.ui.tasklist
 
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
@@ -110,6 +111,12 @@ class CategoryTaskListAdapter(
             binding.textTaskName.text = item.name
             binding.textInstructionCount.text =
                 binding.root.context.getString(R.string.instructions_count, item.instructionCount)
+            if (item.matchingInstruction != null) {
+                binding.textMatchingInstruction.text = item.matchingInstruction
+                binding.textMatchingInstruction.visibility = View.VISIBLE
+            } else {
+                binding.textMatchingInstruction.visibility = View.GONE
+            }
             binding.root.setOnClickListener { onTaskClick(item) }
         }
     }
