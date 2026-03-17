@@ -56,6 +56,10 @@ class TaskRepository(
     suspend fun getImageUrisForTask(taskId: Long): List<String> =
         instructionDao.getImageUrisForTask(taskId)
 
+    suspend fun touchLastViewed(taskId: Long) {
+        taskDao.touchLastViewed(taskId)
+    }
+
     suspend fun deleteTask(taskId: Long) {
         taskDao.deleteById(taskId)
     }

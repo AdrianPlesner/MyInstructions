@@ -67,10 +67,10 @@ class TaskListViewModel(application: Application) : AndroidViewModel(application
                 }
         }
 
-        // Recent mode: flat list sorted by updatedAt
+        // Recent mode: flat list sorted by lastViewedAt
         if (sortMode == SortMode.RECENT) {
             return@combine allTasksWithInstructions
-                .sortedByDescending { it.task.updatedAt }
+                .sortedByDescending { it.task.lastViewedAt }
                 .map { twi ->
                     ListItem.TaskRow(
                         TaskItem(
@@ -111,7 +111,7 @@ class TaskListViewModel(application: Application) : AndroidViewModel(application
         // Uncategorized tasks at the bottom
         val uncategorizedTasks = allTasksWithInstructions
             .filter { it.task.id in uncategorizedIdSet }
-            .sortedByDescending { it.task.updatedAt }
+            .sortedByDescending { it.task.lastViewedAt }
         if (uncategorizedTasks.isNotEmpty()) {
             val isExpanded = UNCATEGORIZED_ID in expanded
             items.add(ListItem.UncategorizedHeader(uncategorizedTasks.size, isExpanded))

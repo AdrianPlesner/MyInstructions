@@ -14,7 +14,7 @@ import com.example.myinstructions.data.entity.TaskEntity
 
 @Database(
     entities = [TaskEntity::class, InstructionEntity::class, CategoryEntity::class, TaskCategoryCrossRef::class],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {

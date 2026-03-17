@@ -39,6 +39,7 @@ class TaskDetailFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         taskId = arguments?.getLong("taskId") ?: -1L
+        viewModel.markViewed(taskId)
 
         val adapter = InstructionDetailAdapter()
         binding.recyclerInstructions.layoutManager = LinearLayoutManager(requireContext())

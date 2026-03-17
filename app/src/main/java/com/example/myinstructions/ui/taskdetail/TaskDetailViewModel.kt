@@ -18,6 +18,12 @@ class TaskDetailViewModel(application: Application) : AndroidViewModel(applicati
     fun getTaskWithInstructions(taskId: Long): Flow<TaskWithInstructions?> =
         repository.getTaskWithInstructions(taskId)
 
+    fun markViewed(taskId: Long) {
+        viewModelScope.launch {
+            repository.touchLastViewed(taskId)
+        }
+    }
+
     fun deleteTask(taskId: Long, onDone: () -> Unit) {
         viewModelScope.launch {
             val imageUris = repository.getImageUrisForTask(taskId)
