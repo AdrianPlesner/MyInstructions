@@ -61,4 +61,7 @@
     <string name="import_done">%d task(s) imported</string>
     <string name="assign_categories_label">Assign to categories</string>
     <string name="select_all_in_category">Select all</string>
+    <string name="selected_count">%d selected</string>
+    <string name="exit_selection">Exit selection</string>
+    <string name="delete_tasks_message">Delete %d task(s)? This cannot be undone.</string>
 </resources>
