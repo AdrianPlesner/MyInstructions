@@ -12,7 +12,8 @@
         android:layout_height="wrap_content"
         android:layout_margin="8dp"
         style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
-        app:startIconDrawable="@android:drawable/ic_menu_search">
+        app:startIconDrawable="@android:drawable/ic_menu_search"
+        app:endIconMode="clear_text">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/edit_search"
