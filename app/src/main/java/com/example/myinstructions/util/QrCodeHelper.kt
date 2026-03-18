@@ -12,8 +12,9 @@ import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
 import java.io.ByteArrayOutputStream
+import java.io.IOException
 import java.util.zip.DeflaterOutputStream
-import java.util.zip.InflaterOutputStream
+import java.util.zip.Inflater
 
 object QrCodeHelper {
 
@@ -22,6 +23,13 @@ object QrCodeHelper {
 
     /** Prefix that marks a compressed+Base64 payload vs a legacy plain-JSON payload. */
     private const val COMPRESSED_PREFIX = "z:"
+
+    /**
+     * Hard cap on decompressed output. A legitimate QR payload of 23 tasks × 5 instructions
+     * × 40 chars is ~14 KB of JSON. 50 KB leaves a generous margin while blocking decompression
+     * bombs that could expand a ~2.9 KB QR payload to hundreds of megabytes.
+     */
+    private const val MAX_DECOMPRESSED_BYTES = 50_000
 
     // ── Serialisation ────────────────────────────────────────────────────────
 
@@ -70,8 +78,21 @@ object QrCodeHelper {
     }
 
     private fun decompress(input: ByteArray): String {
+        val inflater = Inflater()
+        inflater.setInput(input)
         val bos = ByteArrayOutputStream()
-        InflaterOutputStream(bos).use { it.write(input) }
+        val buffer = ByteArray(4096)
+        var total = 0
+        try {
+            while (!inflater.finished()) {
+                val count = inflater.inflate(buffer)
+                total += count
+                if (total > MAX_DECOMPRESSED_BYTES) throw IOException("Decompressed payload exceeds limit")
+                bos.write(buffer, 0, count)
+            }
+        } finally {
+            inflater.end()
+        }
         return bos.toString("UTF-8")
     }
 
