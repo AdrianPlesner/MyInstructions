@@ -34,4 +34,7 @@
     <string name="sort_by_recent">Sort by recent</string>
     <string name="matching_instruction_prefix">↳ %s</string>
     <string name="drag_to_reorder">Drag to reorder</string>
+    <string name="image_source_title">Add image from</string>
+    <string name="image_source_gallery">Gallery</string>
+    <string name="image_source_camera">Camera</string>
 </resources>

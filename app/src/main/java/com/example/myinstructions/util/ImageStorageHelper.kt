@@ -2,6 +2,7 @@ package com.example.myinstructions.util
 
 import android.content.Context
 import android.net.Uri
+import androidx.core.content.FileProvider
 import java.io.File
 import java.util.UUID
 
@@ -37,5 +38,23 @@ object ImageStorageHelper {
 
     fun deleteImages(context: Context, relativePaths: List<String>) {
         relativePaths.forEach { deleteImage(context, it) }
+    }
+
+    /**
+     * Creates a new empty image file in internal storage and returns a pair of:
+     * - the content URI (for passing to the camera intent)
+     * - the relative path (for storing in the database)
+     */
+    fun createImageFileUri(context: Context): Pair<Uri, String> {
+        val imagesDir = File(context.filesDir, IMAGES_DIR)
+        if (!imagesDir.exists()) imagesDir.mkdirs()
+        val fileName = "${UUID.randomUUID()}.jpg"
+        val file = File(imagesDir, fileName)
+        val uri = FileProvider.getUriForFile(
+            context,
+            "${context.packageName}.fileprovider",
+            file
+        )
+        return uri to "$IMAGES_DIR/$fileName"
     }
 }

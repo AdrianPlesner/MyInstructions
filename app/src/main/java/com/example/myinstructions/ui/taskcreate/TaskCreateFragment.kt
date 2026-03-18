@@ -7,6 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
@@ -32,6 +33,7 @@ class TaskCreateFragment : Fragment() {
 
     private var taskId: Long = -1L
     private var pendingImagePosition: Int = -1
+    private var pendingCameraRelativePath: String? = null
     private lateinit var adapter: InstructionEditAdapter
     private lateinit var itemTouchHelper: ItemTouchHelper
 
@@ -45,6 +47,19 @@ class TaskCreateFragment : Fragment() {
             }
         }
         pendingImagePosition = -1
+    }
+
+    private val takePictureLauncher = registerForActivityResult(
+        ActivityResultContracts.TakePicture()
+    ) { success: Boolean ->
+        if (success && pendingImagePosition >= 0 && pendingCameraRelativePath != null) {
+            adapter.setImage(pendingImagePosition, pendingCameraRelativePath!!)
+        } else if (!success && pendingCameraRelativePath != null) {
+            // Clean up the empty file if the user cancelled
+            ImageStorageHelper.deleteImage(requireContext(), pendingCameraRelativePath!!)
+        }
+        pendingImagePosition = -1
+        pendingCameraRelativePath = null
     }
 
     override fun onCreateView(
@@ -81,7 +96,7 @@ class TaskCreateFragment : Fragment() {
         adapter = InstructionEditAdapter(
             onAddImage = { position ->
                 pendingImagePosition = position
-                pickImageLauncher.launch("image/*")
+                showImageSourceDialog()
             },
             onRemoveImage = { position ->
                 val draft = adapter.items.getOrNull(position)
@@ -165,6 +180,26 @@ class TaskCreateFragment : Fragment() {
         } else {
             adapter.addInstruction()
         }
+    }
+
+    private fun showImageSourceDialog() {
+        val options = arrayOf(
+            getString(R.string.image_source_gallery),
+            getString(R.string.image_source_camera)
+        )
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle(R.string.image_source_title)
+            .setItems(options) { _, which ->
+                when (which) {
+                    0 -> pickImageLauncher.launch("image/*")
+                    1 -> {
+                        val (uri, relativePath) = ImageStorageHelper.createImageFileUri(requireContext())
+                        pendingCameraRelativePath = relativePath
+                        takePictureLauncher.launch(uri)
+                    }
+                }
+            }
+            .show()
     }
 
     private fun setupCategoryChips() {
