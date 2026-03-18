@@ -13,6 +13,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
+import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.myinstructions.R
@@ -32,6 +33,7 @@ class TaskCreateFragment : Fragment() {
     private var taskId: Long = -1L
     private var pendingImagePosition: Int = -1
     private lateinit var adapter: InstructionEditAdapter
+    private lateinit var itemTouchHelper: ItemTouchHelper
 
     private val pickImageLauncher = registerForActivityResult(
         ActivityResultContracts.GetContent()
@@ -58,6 +60,24 @@ class TaskCreateFragment : Fragment() {
 
         taskId = arguments?.getLong("taskId", -1L) ?: -1L
 
+        val touchCallback = object : ItemTouchHelper.SimpleCallback(
+            ItemTouchHelper.UP or ItemTouchHelper.DOWN, 0
+        ) {
+            override fun onMove(
+                recyclerView: RecyclerView,
+                viewHolder: RecyclerView.ViewHolder,
+                target: RecyclerView.ViewHolder
+            ): Boolean {
+                adapter.moveInstruction(viewHolder.adapterPosition, target.adapterPosition)
+                return true
+            }
+
+            override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {}
+
+            override fun isLongPressDragEnabled(): Boolean = false
+        }
+        itemTouchHelper = ItemTouchHelper(touchCallback)
+
         adapter = InstructionEditAdapter(
             onAddImage = { position ->
                 pendingImagePosition = position
@@ -76,11 +96,15 @@ class TaskCreateFragment : Fragment() {
                     ImageStorageHelper.deleteImage(requireContext(), draft.imageUri!!)
                 }
                 adapter.removeInstruction(position)
+            },
+            onStartDrag = { viewHolder ->
+                itemTouchHelper.startDrag(viewHolder)
             }
         )
 
         binding.recyclerInstructionsEdit.layoutManager = LinearLayoutManager(requireContext())
         binding.recyclerInstructionsEdit.adapter = adapter
+        itemTouchHelper.attachToRecyclerView(binding.recyclerInstructionsEdit)
 
         // When a text field gains focus, scroll its card to the top of the visible area
         binding.recyclerInstructionsEdit.addOnChildAttachStateChangeListener(

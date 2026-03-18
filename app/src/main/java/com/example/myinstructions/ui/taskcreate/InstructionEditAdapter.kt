@@ -1,8 +1,10 @@
 package com.example.myinstructions.ui.taskcreate
 
+import android.annotation.SuppressLint
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.LayoutInflater
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
@@ -13,7 +15,8 @@ import com.example.myinstructions.util.ImageStorageHelper
 class InstructionEditAdapter(
     private val onAddImage: (position: Int) -> Unit,
     private val onRemoveImage: (position: Int) -> Unit,
-    private val onRemoveInstruction: (position: Int) -> Unit
+    private val onRemoveInstruction: (position: Int) -> Unit,
+    private val onStartDrag: ((RecyclerView.ViewHolder) -> Unit)? = null
 ) : RecyclerView.Adapter<InstructionEditAdapter.ViewHolder>() {
 
     val items = mutableListOf<InstructionDraft>()
@@ -44,6 +47,14 @@ class InstructionEditAdapter(
         }
     }
 
+    fun moveInstruction(from: Int, to: Int) {
+        if (from in items.indices && to in items.indices) {
+            val item = items.removeAt(from)
+            items.add(to, item)
+            notifyItemMoved(from, to)
+        }
+    }
+
     fun setImage(position: Int, imageUri: String?) {
         if (position in items.indices) {
             items[position].imageUri = imageUri
@@ -56,7 +67,14 @@ class InstructionEditAdapter(
 
         private var textWatcher: TextWatcher? = null
 
+        @SuppressLint("ClickableViewAccessibility")
         fun bind(draft: InstructionDraft) {
+            binding.dragHandle.setOnTouchListener { _, event ->
+                if (event.actionMasked == MotionEvent.ACTION_DOWN) {
+                    onStartDrag?.invoke(this)
+                }
+                false
+            }
             textWatcher?.let { binding.editInstructionText.removeTextChangedListener(it) }
 
             binding.editInstructionText.setText(draft.text)
