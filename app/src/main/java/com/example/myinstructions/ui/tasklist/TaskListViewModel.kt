@@ -212,11 +212,13 @@ class TaskListViewModel(application: Application) : AndroidViewModel(application
 
     fun toggleCategorySelection(taskIds: List<Long>) {
         val current = _selectedTaskIds.value
-        _selectedTaskIds.value = if (taskIds.all { it in current }) {
+        val updated = if (taskIds.all { it in current }) {
             current - taskIds.toSet()
         } else {
             current + taskIds.toSet()
         }
+        _selectedTaskIds.value = updated
+        if (updated.isEmpty()) exitSelectionMode()
     }
 
     fun exitSelectionMode() {
