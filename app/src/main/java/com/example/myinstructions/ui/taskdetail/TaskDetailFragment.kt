@@ -50,6 +50,7 @@ class TaskDetailFragment : Fragment() {
                 menuInflater.inflate(R.menu.menu_main, menu)
                 menu.findItem(R.id.action_edit)?.isVisible = true
                 menu.findItem(R.id.action_delete)?.isVisible = true
+                menu.findItem(R.id.action_share_task)?.isVisible = true
             }
 
             override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
@@ -63,6 +64,11 @@ class TaskDetailFragment : Fragment() {
                     }
                     R.id.action_delete -> {
                         showDeleteConfirmation()
+                        true
+                    }
+                    R.id.action_share_task -> {
+                        val bundle = Bundle().apply { putLong("preselectedTaskId", taskId) }
+                        findNavController().navigate(R.id.action_TaskDetail_to_ShareSelection, bundle)
                         true
                     }
                     else -> false

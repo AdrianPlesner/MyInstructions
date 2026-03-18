@@ -19,6 +19,12 @@
         <action
             android:id="@+id/action_TaskList_to_CategoryManage"
             app:destination="@id/CategoryManageFragment" />
+        <action
+            android:id="@+id/action_TaskList_to_ShareSelection"
+            app:destination="@id/ShareSelectionFragment" />
+        <action
+            android:id="@+id/action_TaskList_to_ScanQr"
+            app:destination="@id/ScanQrFragment" />
     </fragment>
 
     <fragment
@@ -32,6 +38,49 @@
         <action
             android:id="@+id/action_TaskDetail_to_TaskCreate"
             app:destination="@id/TaskCreateFragment" />
+        <action
+            android:id="@+id/action_TaskDetail_to_ShareSelection"
+            app:destination="@id/ShareSelectionFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/ShareSelectionFragment"
+        android:name="com.example.myinstructions.ui.share.ShareSelectionFragment"
+        android:label="@string/share_tasks_title"
+        tools:layout="@layout/fragment_share_selection">
+        <action
+            android:id="@+id/action_ShareSelection_to_QrDisplay"
+            app:destination="@id/QrDisplayFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/QrDisplayFragment"
+        android:name="com.example.myinstructions.ui.share.QrDisplayFragment"
+        android:label="@string/qr_display_title"
+        tools:layout="@layout/fragment_qr_display">
+        <argument
+            android:name="tasksJson"
+            app:argType="string" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/ScanQrFragment"
+        android:name="com.example.myinstructions.ui.scan.ScanQrFragment"
+        android:label="@string/scan_qr_title"
+        tools:layout="@layout/fragment_scan_qr">
+        <action
+            android:id="@+id/action_ScanQr_to_ImportWizard"
+            app:destination="@id/ImportTaskWizardFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/ImportTaskWizardFragment"
+        android:name="com.example.myinstructions.ui.scan.ImportTaskWizardFragment"
+        android:label="@string/import_wizard_title"
+        tools:layout="@layout/fragment_import_wizard">
+        <argument
+            android:name="tasksJson"
+            app:argType="string" />
     </fragment>
 
     <fragment

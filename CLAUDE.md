@@ -34,3 +34,5 @@ Android app built with Kotlin using Navigation Component for multi-fragment navi
 - Follow official Kotlin code style
 - Dependencies managed via `gradle/libs.versions.toml` version catalog
 - Use View Binding for view references (no `findViewById`)
+- When the data model is updated, the goal is always to migrate existing data. Never delete existing data unless absolutely necessary
+- Update readme.md accordingly when making changes

@@ -42,6 +42,8 @@ class TaskListFragment : Fragment() {
             override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
                 menu.findItem(R.id.action_manage_categories)?.isVisible = true
                 menu.findItem(R.id.action_sort)?.isVisible = true
+                menu.findItem(R.id.action_share_tasks)?.isVisible = true
+                menu.findItem(R.id.action_scan_qr)?.isVisible = true
             }
 
             override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
@@ -55,12 +57,22 @@ class TaskListFragment : Fragment() {
                         requireActivity().invalidateOptionsMenu()
                         true
                     }
+                    R.id.action_share_tasks -> {
+                        findNavController().navigate(R.id.action_TaskList_to_ShareSelection)
+                        true
+                    }
+                    R.id.action_scan_qr -> {
+                        findNavController().navigate(R.id.action_TaskList_to_ScanQr)
+                        true
+                    }
                     else -> false
                 }
             }
 
             override fun onPrepareMenu(menu: Menu) {
                 menu.findItem(R.id.action_manage_categories)?.isVisible = true
+                menu.findItem(R.id.action_share_tasks)?.isVisible = true
+                menu.findItem(R.id.action_scan_qr)?.isVisible = true
                 menu.findItem(R.id.action_sort)?.apply {
                     isVisible = true
                     // Show the option to switch TO the other mode
@@ -79,6 +91,10 @@ class TaskListFragment : Fragment() {
             },
             onHeaderClick = { categoryId ->
                 viewModel.toggleCategory(categoryId)
+            },
+            onHeaderLongClick = { _, taskIds ->
+                val bundle = Bundle().apply { putLongArray("preselectedTaskIds", taskIds.toLongArray()) }
+                findNavController().navigate(R.id.action_TaskList_to_ShareSelection, bundle)
             }
         )
 
