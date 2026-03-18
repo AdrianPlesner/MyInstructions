@@ -1,5 +1,7 @@
 package com.example.myinstructions.ui.taskcreate
 
+import android.app.Activity
+import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -7,7 +9,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
@@ -22,8 +23,11 @@ import com.example.myinstructions.data.entity.CategoryEntity
 import com.example.myinstructions.databinding.FragmentTaskCreateBinding
 import com.example.myinstructions.util.ImageStorageHelper
 import com.google.android.material.chip.Chip
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.yalantis.ucrop.UCrop
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
+import java.io.File
 
 class TaskCreateFragment : Fragment() {
 
@@ -34,6 +38,7 @@ class TaskCreateFragment : Fragment() {
     private var taskId: Long = -1L
     private var pendingImagePosition: Int = -1
     private var pendingCameraRelativePath: String? = null
+    private var pendingCropDestRelativePath: String? = null
     private lateinit var adapter: InstructionEditAdapter
     private lateinit var itemTouchHelper: ItemTouchHelper
 
@@ -41,25 +46,68 @@ class TaskCreateFragment : Fragment() {
         ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
         if (uri != null && pendingImagePosition >= 0) {
-            val relativePath = ImageStorageHelper.copyImageToInternalStorage(requireContext(), uri)
-            if (relativePath != null) {
-                adapter.setImage(pendingImagePosition, relativePath)
-            }
+            launchCrop(uri)
+        } else {
+            pendingImagePosition = -1
         }
-        pendingImagePosition = -1
     }
 
     private val takePictureLauncher = registerForActivityResult(
         ActivityResultContracts.TakePicture()
     ) { success: Boolean ->
         if (success && pendingImagePosition >= 0 && pendingCameraRelativePath != null) {
-            adapter.setImage(pendingImagePosition, pendingCameraRelativePath!!)
-        } else if (!success && pendingCameraRelativePath != null) {
-            // Clean up the empty file if the user cancelled
-            ImageStorageHelper.deleteImage(requireContext(), pendingCameraRelativePath!!)
+            val sourceFile = ImageStorageHelper.getAbsolutePath(requireContext(), pendingCameraRelativePath!!)
+            val sourceUri = Uri.fromFile(sourceFile)
+            launchCrop(sourceUri)
+        } else {
+            if (pendingCameraRelativePath != null) {
+                ImageStorageHelper.deleteImage(requireContext(), pendingCameraRelativePath!!)
+            }
+            pendingImagePosition = -1
+            pendingCameraRelativePath = null
+        }
+    }
+
+    private val cropLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK && result.data != null) {
+            val croppedUri = UCrop.getOutput(result.data!!)
+            if (croppedUri != null && pendingImagePosition >= 0 && pendingCropDestRelativePath != null) {
+                // Clean up the camera source file if it was different from the crop dest
+                cleanUpCameraSourceIfNeeded()
+                adapter.setImage(pendingImagePosition, pendingCropDestRelativePath!!)
+            }
+        } else {
+            // User cancelled crop — clean up
+            if (pendingCropDestRelativePath != null) {
+                ImageStorageHelper.deleteImage(requireContext(), pendingCropDestRelativePath!!)
+            }
+            cleanUpCameraSourceIfNeeded()
         }
         pendingImagePosition = -1
         pendingCameraRelativePath = null
+        pendingCropDestRelativePath = null
+    }
+
+    private fun cleanUpCameraSourceIfNeeded() {
+        if (pendingCameraRelativePath != null && pendingCameraRelativePath != pendingCropDestRelativePath) {
+            ImageStorageHelper.deleteImage(requireContext(), pendingCameraRelativePath!!)
+        }
+    }
+
+    private fun launchCrop(sourceUri: Uri) {
+        val (destUri, destRelativePath) = ImageStorageHelper.createImageFileUri(requireContext())
+        pendingCropDestRelativePath = destRelativePath
+        val destFile = ImageStorageHelper.getAbsolutePath(requireContext(), destRelativePath)
+        val options = UCrop.Options().apply {
+            setFreeStyleCropEnabled(true)
+            setCompressionQuality(90)
+        }
+        val intent = UCrop.of(sourceUri, Uri.fromFile(destFile))
+            .withOptions(options)
+            .getIntent(requireContext())
+        cropLauncher.launch(intent)
     }
 
     override fun onCreateView(
