@@ -78,6 +78,7 @@ object QrCodeHelper {
     }
 
     private fun decompress(input: ByteArray): String {
+        if (input.isEmpty()) throw IOException("Empty compressed payload")
         val inflater = Inflater()
         inflater.setInput(input)
         val bos = ByteArrayOutputStream()
@@ -86,6 +87,11 @@ object QrCodeHelper {
         try {
             while (!inflater.finished()) {
                 val count = inflater.inflate(buffer)
+                // inflate() returns 0 and needsInput() is true when the stream is
+                // truncated — there is no more data but the end-of-stream marker was
+                // never written, so finished() will never become true. Break out and
+                // let the caller treat the result as invalid.
+                if (count == 0 && inflater.needsInput()) throw IOException("Truncated compressed payload")
                 total += count
                 if (total > MAX_DECOMPRESSED_BYTES) throw IOException("Decompressed payload exceeds limit")
                 bos.write(buffer, 0, count)
