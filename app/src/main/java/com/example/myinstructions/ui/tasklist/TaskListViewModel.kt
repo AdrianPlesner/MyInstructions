@@ -94,7 +94,7 @@ class TaskListViewModel(application: Application) : AndroidViewModel(application
             val taskCount = cwt.tasks.size
             if (taskCount == 0) continue
             val isExpanded = cwt.category.id in expanded
-            items.add(ListItem.CategoryHeader(cwt.category.id, cwt.category.name, taskCount, isExpanded))
+            items.add(ListItem.CategoryHeader(cwt.category.id, cwt.category.name, taskCount, isExpanded, taskIds = cwt.tasks.map { it.id }))
             if (isExpanded) {
                 for (task in cwt.tasks.sortedByDescending { it.updatedAt }) {
                     val twi = taskInstructionMap[task.id]

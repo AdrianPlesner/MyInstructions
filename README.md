@@ -13,6 +13,7 @@ An Android app for managing tasks with step-by-step instructions. Organize your 
 - **Drag & Drop** — Reorder instructions by dragging the handle on each card
 - **Local Persistence** — All data stored locally using Room database
 - **Image Cropping** — Free-style crop images before attaching them to instructions (powered by UCrop)
+- **QR Code Sharing** — Share tasks between devices via QR codes; select individual tasks, a whole category, or any combination. Scan incoming QR codes and assign categories to each imported task via a step-by-step wizard (note: images are not included in QR exports)
 
 ## Screenshots
 
@@ -30,6 +31,7 @@ _Coming soon_
 | Database | Room (v2.7.0) with KSP |
 | Image Loading | Coil |
 | Image Cropping | UCrop |
+| QR Code | ZXing Android Embedded (4.3.0) |
 | View References | View Binding |
 | Async | Kotlin Coroutines + Flow |
 | Architecture | AndroidViewModel + Repository pattern |
@@ -69,8 +71,10 @@ app/src/main/java/com/example/myinstructions/
 │   ├── tasklist/         # Main screen (grouped list, search, sort)
 │   ├── taskdetail/       # Task detail view (read-only instructions)
 │   ├── taskcreate/       # Task create/edit (instructions editor, image picker)
-│   └── category/         # Category management screen
-├── util/                 # Helpers (ImageStorageHelper, HighlightHelper)
+│   ├── category/         # Category management screen
+│   ├── share/            # QR sharing (ShareSelectionFragment, QrDisplayFragment)
+│   └── scan/             # QR scanning and import wizard
+├── util/                 # Helpers (ImageStorageHelper, HighlightHelper, QrCodeHelper)
 └── MainActivity.kt       # Single-activity host
 ```
 

@@ -18,7 +18,8 @@ sealed class ListItem {
         val id: Long,
         val name: String,
         val taskCount: Int,
-        val isExpanded: Boolean
+        val isExpanded: Boolean,
+        val taskIds: List<Long> = emptyList()
     ) : ListItem()
 
     data class UncategorizedHeader(
@@ -31,7 +32,8 @@ sealed class ListItem {
 
 class CategoryTaskListAdapter(
     private val onTaskClick: (TaskItem) -> Unit,
-    private val onHeaderClick: (Long) -> Unit
+    private val onHeaderClick: (Long) -> Unit,
+    private val onHeaderLongClick: ((categoryId: Long, taskIds: List<Long>) -> Unit)? = null
 ) : ListAdapter<ListItem, RecyclerView.ViewHolder>(DIFF) {
 
     companion object {
@@ -82,11 +84,11 @@ class CategoryTaskListAdapter(
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         when (val item = getItem(position)) {
             is ListItem.CategoryHeader -> (holder as HeaderViewHolder).bind(
-                item.name, item.taskCount, item.isExpanded, item.id
+                item.name, item.taskCount, item.isExpanded, item.id, item.taskIds
             )
             is ListItem.UncategorizedHeader -> (holder as HeaderViewHolder).bind(
                 holder.itemView.context.getString(R.string.uncategorized),
-                item.taskCount, item.isExpanded, UNCATEGORIZED_ID
+                item.taskCount, item.isExpanded, UNCATEGORIZED_ID, emptyList()
             )
             is ListItem.TaskRow -> (holder as TaskViewHolder).bind(item.task)
         }
@@ -95,7 +97,7 @@ class CategoryTaskListAdapter(
     inner class HeaderViewHolder(private val binding: ItemCategoryHeaderBinding) :
         RecyclerView.ViewHolder(binding.root) {
 
-        fun bind(name: String, taskCount: Int, isExpanded: Boolean, categoryId: Long) {
+        fun bind(name: String, taskCount: Int, isExpanded: Boolean, categoryId: Long, taskIds: List<Long> = emptyList()) {
             binding.textCategoryName.text = name
             binding.textTaskCount.text = binding.root.context.getString(
                 R.string.category_task_count, taskCount
@@ -104,6 +106,10 @@ class CategoryTaskListAdapter(
                 if (isExpanded) R.drawable.ic_expand_less else R.drawable.ic_expand_more
             )
             binding.root.setOnClickListener { onHeaderClick(categoryId) }
+            binding.root.setOnLongClickListener {
+                onHeaderLongClick?.invoke(categoryId, taskIds)
+                onHeaderLongClick != null
+            }
         }
     }
 
