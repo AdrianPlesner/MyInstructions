@@ -236,23 +236,34 @@ class TaskListViewModel(application: Application) : AndroidViewModel(application
         }
     }
 
+    /**
+     * Returns all categories with a pre-checked state.
+     * A category is pre-checked if ANY of the selected tasks already has it,
+     * so the user can see current assignments at a glance.
+     */
     suspend fun getCategoriesForDialog(): Pair<List<CategoryEntity>, BooleanArray> {
         val selectedIds = _selectedTaskIds.value.toList()
         val allCategories = categoryRepository.getAllCategoriesOnce()
         val checked = BooleanArray(allCategories.size) { index ->
             val cat = allCategories[index]
-            selectedIds.isNotEmpty() && selectedIds.all { taskId ->
+            selectedIds.isNotEmpty() && selectedIds.any { taskId ->
                 categoryRepository.getCategoriesForTask(taskId).any { it.id == cat.id }
             }
         }
         return allCategories to checked
     }
 
-    fun assignCategoriesToSelected(categoryIds: List<Long>) {
+    /**
+     * Adds [categoryIds] to every selected task without removing any
+     * categories those tasks already have.
+     */
+    fun addCategoriesToSelected(categoryIds: List<Long>) {
         val ids = _selectedTaskIds.value.toList()
         viewModelScope.launch {
-            for (id in ids) {
-                categoryRepository.setTaskCategories(id, categoryIds)
+            for (taskId in ids) {
+                val existing = categoryRepository.getCategoriesForTask(taskId).map { it.id }
+                val merged = (existing + categoryIds).distinct()
+                categoryRepository.setTaskCategories(taskId, merged)
             }
             exitSelectionMode()
         }

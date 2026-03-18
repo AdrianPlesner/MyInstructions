@@ -208,7 +208,7 @@ class TaskListFragment : Fragment() {
                     val selectedCategoryIds = categories
                         .filterIndexed { i, _ -> checkedMutable[i] }
                         .map { it.id }
-                    viewModel.assignCategoriesToSelected(selectedCategoryIds)
+                    viewModel.addCategoriesToSelected(selectedCategoryIds)
                 }
                 .setNegativeButton(R.string.cancel, null)
                 .show()
