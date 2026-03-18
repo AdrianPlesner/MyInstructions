@@ -237,19 +237,13 @@ class TaskListViewModel(application: Application) : AndroidViewModel(application
     }
 
     /**
-     * Returns all categories with a pre-checked state.
-     * A category is pre-checked if ANY of the selected tasks already has it,
-     * so the user can see current assignments at a glance.
+     * Returns all categories with nothing pre-checked.
+     * The dialog is for choosing NEW categories to add; existing
+     * assignments on each task are unrelated to this selection.
      */
     suspend fun getCategoriesForDialog(): Pair<List<CategoryEntity>, BooleanArray> {
-        val selectedIds = _selectedTaskIds.value.toList()
         val allCategories = categoryRepository.getAllCategoriesOnce()
-        val checked = BooleanArray(allCategories.size) { index ->
-            val cat = allCategories[index]
-            selectedIds.isNotEmpty() && selectedIds.any { taskId ->
-                categoryRepository.getCategoriesForTask(taskId).any { it.id == cat.id }
-            }
-        }
+        val checked = BooleanArray(allCategories.size) { false }
         return allCategories to checked
     }
 
