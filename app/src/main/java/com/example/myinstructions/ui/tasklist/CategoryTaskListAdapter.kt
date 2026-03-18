@@ -1,13 +1,17 @@
 package com.example.myinstructions.ui.tasklist
 
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
+import android.widget.LinearLayout
+import android.widget.TextView
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.example.myinstructions.R
 import com.example.myinstructions.databinding.ItemCategoryHeaderBinding
 import com.example.myinstructions.databinding.ItemTaskBinding
+import com.example.myinstructions.util.HighlightHelper
 
 sealed class ListItem {
     data class CategoryHeader(
@@ -107,9 +111,36 @@ class CategoryTaskListAdapter(
         RecyclerView.ViewHolder(binding.root) {
 
         fun bind(item: TaskItem) {
-            binding.textTaskName.text = item.name
+            binding.textTaskName.text = HighlightHelper.highlight(item.name, item.searchQuery)
             binding.textInstructionCount.text =
                 binding.root.context.getString(R.string.instructions_count, item.instructionCount)
+
+            val container = binding.containerMatchingInstructions
+            container.removeAllViews()
+            if (item.matchingInstructions.isNotEmpty()) {
+                container.visibility = View.VISIBLE
+                val context = binding.root.context
+                val prefix = context.getString(R.string.matching_instruction_prefix, "")
+                for (text in item.matchingInstructions) {
+                    val fullText = context.getString(R.string.matching_instruction_prefix, text)
+                    val highlighted = HighlightHelper.highlight(fullText, item.searchQuery)
+                    val tv = TextView(context).apply {
+                        layoutParams = LinearLayout.LayoutParams(
+                            LinearLayout.LayoutParams.MATCH_PARENT,
+                            LinearLayout.LayoutParams.WRAP_CONTENT
+                        ).apply { topMargin = 4 }
+                        setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodySmall)
+                        setTypeface(typeface, android.graphics.Typeface.ITALIC)
+                        maxLines = 2
+                        ellipsize = android.text.TextUtils.TruncateAt.END
+                        this.text = highlighted
+                    }
+                    container.addView(tv)
+                }
+            } else {
+                container.visibility = View.GONE
+            }
+
             binding.root.setOnClickListener { onTaskClick(item) }
         }
     }

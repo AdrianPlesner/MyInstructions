@@ -29,6 +29,13 @@
             android:layout_marginTop="4dp"
             android:textAppearance="?attr/textAppearanceBodySmall" />
 
+        <LinearLayout
+            android:id="@+id/container_matching_instructions"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone" />
+
     </LinearLayout>
 
 </com.google.android.material.card.MaterialCardView>

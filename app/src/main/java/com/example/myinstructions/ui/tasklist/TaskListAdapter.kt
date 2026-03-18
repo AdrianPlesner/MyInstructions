@@ -11,7 +11,9 @@ import com.example.myinstructions.databinding.ItemTaskBinding
 data class TaskItem(
     val id: Long,
     val name: String,
-    val instructionCount: Int
+    val instructionCount: Int,
+    val matchingInstructions: List<String> = emptyList(),
+    val searchQuery: String? = null
 )
 
 class TaskListAdapter(
