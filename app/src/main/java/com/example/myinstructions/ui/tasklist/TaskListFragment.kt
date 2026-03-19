@@ -123,6 +123,9 @@ class TaskListFragment : Fragment() {
                     }
                     findNavController().navigate(R.id.action_TaskList_to_ShareSelection, bundle)
                 }
+            },
+            onHeaderExpandClick = { categoryId ->
+                viewModel.toggleCategory(categoryId)
             }
         )
 

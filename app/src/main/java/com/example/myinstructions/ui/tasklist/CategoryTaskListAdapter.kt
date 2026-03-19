@@ -43,7 +43,9 @@ class CategoryTaskListAdapter(
     private val onTaskClick: (TaskItem) -> Unit,
     private val onTaskLongClick: ((TaskItem) -> Unit)? = null,
     private val onHeaderClick: (categoryId: Long, taskIds: List<Long>) -> Unit,
-    private val onHeaderLongClick: ((categoryId: Long, taskIds: List<Long>) -> Unit)? = null
+    private val onHeaderLongClick: ((categoryId: Long, taskIds: List<Long>) -> Unit)? = null,
+    /** Called when the expand/collapse icon is tapped — always triggers regardless of selection mode. */
+    private val onHeaderExpandClick: ((categoryId: Long) -> Unit)? = null
 ) : ListAdapter<ListItem, RecyclerView.ViewHolder>(DIFF) {
 
     companion object {
@@ -123,18 +125,23 @@ class CategoryTaskListAdapter(
                 R.string.category_task_count, taskCount
             )
 
+            // Expand icon is always visible and always toggles expand/collapse
+            binding.iconExpand.visibility = View.VISIBLE
+            binding.iconExpand.setImageResource(
+                if (isExpanded) R.drawable.ic_expand_less else R.drawable.ic_expand_more
+            )
+            binding.iconExpand.setOnClickListener {
+                (onHeaderExpandClick ?: { id -> onHeaderClick(id, emptyList()) }).invoke(categoryId)
+            }
+
             if (isSelectionMode) {
                 binding.checkboxSelect.visibility = View.VISIBLE
                 binding.checkboxSelect.isChecked = isAllSelected
-                binding.iconExpand.visibility = View.GONE
+                // Header body tap → toggle selection; long-press consumed silently
                 binding.root.setOnClickListener { onHeaderClick(categoryId, taskIds) }
                 binding.root.setOnLongClickListener { true }
             } else {
                 binding.checkboxSelect.visibility = View.GONE
-                binding.iconExpand.visibility = View.VISIBLE
-                binding.iconExpand.setImageResource(
-                    if (isExpanded) R.drawable.ic_expand_less else R.drawable.ic_expand_more
-                )
                 binding.root.setOnClickListener { onHeaderClick(categoryId, taskIds) }
                 binding.root.setOnLongClickListener {
                     onHeaderLongClick?.invoke(categoryId, taskIds)
