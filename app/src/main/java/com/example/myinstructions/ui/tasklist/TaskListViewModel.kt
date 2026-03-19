@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.myinstructions.data.AppDatabase
+import com.example.myinstructions.data.entity.CategoryEntity
 import com.example.myinstructions.data.repository.CategoryRepository
 import com.example.myinstructions.data.repository.TaskRepository
 import com.example.myinstructions.util.ImageStorageHelper
@@ -26,6 +27,13 @@ class TaskListViewModel(application: Application) : AndroidViewModel(application
     private val _sortMode = MutableStateFlow(SortMode.CATEGORY)
     val sortMode: StateFlow<SortMode> = _sortMode
 
+    // Selection state
+    private val _selectionMode = MutableStateFlow(false)
+    val selectionMode: StateFlow<Boolean> = _selectionMode
+
+    private val _selectedTaskIds = MutableStateFlow<Set<Long>>(emptySet())
+    val selectedTaskIds: StateFlow<Set<Long>> = _selectedTaskIds
+
     fun toggleSortMode() {
         _sortMode.value = when (_sortMode.value) {
             SortMode.CATEGORY -> SortMode.RECENT
@@ -33,8 +41,8 @@ class TaskListViewModel(application: Application) : AndroidViewModel(application
         }
     }
 
-    /** Grouped list for category mode, flat list for recent mode, filtered list for search. */
-    val listItems: Flow<List<ListItem>> = combine(
+    /** Base list items without selection state annotations. */
+    private val _baseListItems: Flow<List<ListItem>> = combine(
         categoryRepository.getAllCategoriesWithTasks(),
         repository.getAllTasksWithInstructions(),
         categoryRepository.getUncategorizedTaskIds(),
@@ -94,7 +102,12 @@ class TaskListViewModel(application: Application) : AndroidViewModel(application
             val taskCount = cwt.tasks.size
             if (taskCount == 0) continue
             val isExpanded = cwt.category.id in expanded
-            items.add(ListItem.CategoryHeader(cwt.category.id, cwt.category.name, taskCount, isExpanded, taskIds = cwt.tasks.map { it.id }))
+            items.add(
+                ListItem.CategoryHeader(
+                    cwt.category.id, cwt.category.name, taskCount, isExpanded,
+                    taskIds = cwt.tasks.map { it.id }
+                )
+            )
             if (isExpanded) {
                 for (task in cwt.tasks.sortedByDescending { it.updatedAt }) {
                     val twi = taskInstructionMap[task.id]
@@ -117,7 +130,12 @@ class TaskListViewModel(application: Application) : AndroidViewModel(application
             .sortedByDescending { it.task.lastViewedAt }
         if (uncategorizedTasks.isNotEmpty()) {
             val isExpanded = UNCATEGORIZED_ID in expanded
-            items.add(ListItem.UncategorizedHeader(uncategorizedTasks.size, isExpanded))
+            items.add(
+                ListItem.UncategorizedHeader(
+                    uncategorizedTasks.size, isExpanded,
+                    taskIds = uncategorizedTasks.map { it.task.id }
+                )
+            )
             if (isExpanded) {
                 for (twi in uncategorizedTasks) {
                     items.add(
@@ -136,6 +154,29 @@ class TaskListViewModel(application: Application) : AndroidViewModel(application
         items
     }
 
+    /** Combined list with selection state annotations. */
+    val listItems: Flow<List<ListItem>> = _baseListItems.combine(
+        combine(_selectionMode, _selectedTaskIds) { mode, ids -> mode to ids }
+    ) { items, (mode, selectedIds) ->
+        if (!mode) return@combine items
+        items.map { item ->
+            when (item) {
+                is ListItem.CategoryHeader -> item.copy(
+                    isSelectionMode = true,
+                    isAllSelected = item.taskIds.isNotEmpty() && item.taskIds.all { it in selectedIds }
+                )
+                is ListItem.UncategorizedHeader -> item.copy(
+                    isSelectionMode = true,
+                    isAllSelected = item.taskIds.isNotEmpty() && item.taskIds.all { it in selectedIds }
+                )
+                is ListItem.TaskRow -> item.copy(
+                    isSelectionMode = true,
+                    isSelected = item.task.id in selectedIds
+                )
+            }
+        }
+    }
+
     fun setSearchQuery(query: String) {
         _searchQuery.value = query
     }
@@ -151,6 +192,76 @@ class TaskListViewModel(application: Application) : AndroidViewModel(application
             val imageUris = repository.getImageUrisForTask(taskId)
             ImageStorageHelper.deleteImages(getApplication(), imageUris)
             repository.deleteTask(taskId)
+        }
+    }
+
+    // ─── Selection mode ──────────────────────────────────────────────────────
+
+    fun enterSelectionMode(taskId: Long) {
+        _selectedTaskIds.value = setOf(taskId)
+        _selectionMode.value = true
+    }
+
+    fun toggleTaskSelection(taskId: Long) {
+        val updated = _selectedTaskIds.value.let { current ->
+            if (taskId in current) current - taskId else current + taskId
+        }
+        _selectedTaskIds.value = updated
+        if (updated.isEmpty()) exitSelectionMode()
+    }
+
+    fun toggleCategorySelection(taskIds: List<Long>) {
+        val current = _selectedTaskIds.value
+        val updated = if (taskIds.all { it in current }) {
+            current - taskIds.toSet()
+        } else {
+            current + taskIds.toSet()
+        }
+        _selectedTaskIds.value = updated
+        if (updated.isEmpty()) exitSelectionMode()
+    }
+
+    fun exitSelectionMode() {
+        _selectionMode.value = false
+        _selectedTaskIds.value = emptySet()
+    }
+
+    fun deleteSelectedTasks() {
+        val ids = _selectedTaskIds.value.toList()
+        viewModelScope.launch {
+            for (id in ids) {
+                val imageUris = repository.getImageUrisForTask(id)
+                ImageStorageHelper.deleteImages(getApplication(), imageUris)
+                repository.deleteTask(id)
+            }
+            exitSelectionMode()
+        }
+    }
+
+    /**
+     * Returns all categories with nothing pre-checked.
+     * The dialog is for choosing NEW categories to add; existing
+     * assignments on each task are unrelated to this selection.
+     */
+    suspend fun getCategoriesForDialog(): Pair<List<CategoryEntity>, BooleanArray> {
+        val allCategories = categoryRepository.getAllCategoriesOnce()
+        val checked = BooleanArray(allCategories.size) { false }
+        return allCategories to checked
+    }
+
+    /**
+     * Adds [categoryIds] to every selected task without removing any
+     * categories those tasks already have.
+     */
+    fun addCategoriesToSelected(categoryIds: List<Long>) {
+        val ids = _selectedTaskIds.value.toList()
+        viewModelScope.launch {
+            for (taskId in ids) {
+                val existing = categoryRepository.getCategoriesForTask(taskId).map { it.id }
+                val merged = (existing + categoryIds).distinct()
+                categoryRepository.setTaskCategories(taskId, merged)
+            }
+            exitSelectionMode()
         }
     }
 

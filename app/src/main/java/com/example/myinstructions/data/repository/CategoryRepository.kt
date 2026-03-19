@@ -25,4 +25,6 @@ class CategoryRepository(private val categoryDao: CategoryDao) {
 
     suspend fun setTaskCategories(taskId: Long, categoryIds: List<Long>) =
         categoryDao.setTaskCategories(taskId, categoryIds)
+
+    suspend fun getAllCategoriesOnce(): List<CategoryEntity> = categoryDao.getAllCategoriesOnce()
 }

@@ -19,20 +19,30 @@ sealed class ListItem {
         val name: String,
         val taskCount: Int,
         val isExpanded: Boolean,
-        val taskIds: List<Long> = emptyList()
+        val taskIds: List<Long> = emptyList(),
+        val isSelectionMode: Boolean = false,
+        val isAllSelected: Boolean = false
     ) : ListItem()
 
     data class UncategorizedHeader(
         val taskCount: Int,
-        val isExpanded: Boolean
+        val isExpanded: Boolean,
+        val taskIds: List<Long> = emptyList(),
+        val isSelectionMode: Boolean = false,
+        val isAllSelected: Boolean = false
     ) : ListItem()
 
-    data class TaskRow(val task: TaskItem) : ListItem()
+    data class TaskRow(
+        val task: TaskItem,
+        val isSelectionMode: Boolean = false,
+        val isSelected: Boolean = false
+    ) : ListItem()
 }
 
 class CategoryTaskListAdapter(
     private val onTaskClick: (TaskItem) -> Unit,
-    private val onHeaderClick: (Long) -> Unit,
+    private val onTaskLongClick: ((TaskItem) -> Unit)? = null,
+    private val onHeaderClick: (categoryId: Long, taskIds: List<Long>) -> Unit,
     private val onHeaderLongClick: ((categoryId: Long, taskIds: List<Long>) -> Unit)? = null
 ) : ListAdapter<ListItem, RecyclerView.ViewHolder>(DIFF) {
 
@@ -84,31 +94,52 @@ class CategoryTaskListAdapter(
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         when (val item = getItem(position)) {
             is ListItem.CategoryHeader -> (holder as HeaderViewHolder).bind(
-                item.name, item.taskCount, item.isExpanded, item.id, item.taskIds
+                item.name, item.taskCount, item.isExpanded, item.id, item.taskIds,
+                item.isSelectionMode, item.isAllSelected
             )
             is ListItem.UncategorizedHeader -> (holder as HeaderViewHolder).bind(
                 holder.itemView.context.getString(R.string.uncategorized),
-                item.taskCount, item.isExpanded, UNCATEGORIZED_ID, emptyList()
+                item.taskCount, item.isExpanded, UNCATEGORIZED_ID, item.taskIds,
+                item.isSelectionMode, item.isAllSelected
             )
-            is ListItem.TaskRow -> (holder as TaskViewHolder).bind(item.task)
+            is ListItem.TaskRow -> (holder as TaskViewHolder).bind(item)
         }
     }
 
     inner class HeaderViewHolder(private val binding: ItemCategoryHeaderBinding) :
         RecyclerView.ViewHolder(binding.root) {
 
-        fun bind(name: String, taskCount: Int, isExpanded: Boolean, categoryId: Long, taskIds: List<Long> = emptyList()) {
+        fun bind(
+            name: String,
+            taskCount: Int,
+            isExpanded: Boolean,
+            categoryId: Long,
+            taskIds: List<Long> = emptyList(),
+            isSelectionMode: Boolean = false,
+            isAllSelected: Boolean = false
+        ) {
             binding.textCategoryName.text = name
             binding.textTaskCount.text = binding.root.context.getString(
                 R.string.category_task_count, taskCount
             )
-            binding.iconExpand.setImageResource(
-                if (isExpanded) R.drawable.ic_expand_less else R.drawable.ic_expand_more
-            )
-            binding.root.setOnClickListener { onHeaderClick(categoryId) }
-            binding.root.setOnLongClickListener {
-                onHeaderLongClick?.invoke(categoryId, taskIds)
-                onHeaderLongClick != null
+
+            if (isSelectionMode) {
+                binding.checkboxSelect.visibility = View.VISIBLE
+                binding.checkboxSelect.isChecked = isAllSelected
+                binding.iconExpand.visibility = View.GONE
+                binding.root.setOnClickListener { onHeaderClick(categoryId, taskIds) }
+                binding.root.setOnLongClickListener { true }
+            } else {
+                binding.checkboxSelect.visibility = View.GONE
+                binding.iconExpand.visibility = View.VISIBLE
+                binding.iconExpand.setImageResource(
+                    if (isExpanded) R.drawable.ic_expand_less else R.drawable.ic_expand_more
+                )
+                binding.root.setOnClickListener { onHeaderClick(categoryId, taskIds) }
+                binding.root.setOnLongClickListener {
+                    onHeaderLongClick?.invoke(categoryId, taskIds)
+                    onHeaderLongClick != null
+                }
             }
         }
     }
@@ -116,20 +147,20 @@ class CategoryTaskListAdapter(
     inner class TaskViewHolder(private val binding: ItemTaskBinding) :
         RecyclerView.ViewHolder(binding.root) {
 
-        fun bind(item: TaskItem) {
-            binding.textTaskName.text = HighlightHelper.highlight(item.name, item.searchQuery)
+        fun bind(item: ListItem.TaskRow) {
+            val task = item.task
+            binding.textTaskName.text = HighlightHelper.highlight(task.name, task.searchQuery)
             binding.textInstructionCount.text =
-                binding.root.context.getString(R.string.instructions_count, item.instructionCount)
+                binding.root.context.getString(R.string.instructions_count, task.instructionCount)
 
             val container = binding.containerMatchingInstructions
             container.removeAllViews()
-            if (item.matchingInstructions.isNotEmpty()) {
+            if (task.matchingInstructions.isNotEmpty()) {
                 container.visibility = View.VISIBLE
                 val context = binding.root.context
-                val prefix = context.getString(R.string.matching_instruction_prefix, "")
-                for (text in item.matchingInstructions) {
+                for (text in task.matchingInstructions) {
                     val fullText = context.getString(R.string.matching_instruction_prefix, text)
-                    val highlighted = HighlightHelper.highlight(fullText, item.searchQuery)
+                    val highlighted = HighlightHelper.highlight(fullText, task.searchQuery)
                     val tv = TextView(context).apply {
                         layoutParams = LinearLayout.LayoutParams(
                             LinearLayout.LayoutParams.MATCH_PARENT,
@@ -147,7 +178,19 @@ class CategoryTaskListAdapter(
                 container.visibility = View.GONE
             }
 
-            binding.root.setOnClickListener { onTaskClick(item) }
+            if (item.isSelectionMode) {
+                binding.checkboxSelect.visibility = View.VISIBLE
+                binding.checkboxSelect.isChecked = item.isSelected
+                binding.root.setOnClickListener { onTaskClick(task) }
+                binding.root.setOnLongClickListener { true }
+            } else {
+                binding.checkboxSelect.visibility = View.GONE
+                binding.root.setOnClickListener { onTaskClick(task) }
+                binding.root.setOnLongClickListener {
+                    onTaskLongClick?.invoke(task)
+                    onTaskLongClick != null
+                }
+            }
         }
     }
 }
