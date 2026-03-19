@@ -40,6 +40,9 @@
     <string name="share_tasks">Share Tasks</string>
     <string name="share_task">Share Task</string>
     <string name="scan_qr_code">Scan QR Code</string>
+    <string name="scan_with_camera">Scan with Camera</string>
+    <string name="scan_from_gallery">Choose from Gallery</string>
+    <string name="no_qr_found">No QR code found in image</string>
     <string name="share_tasks_title">Share Tasks</string>
     <string name="qr_display_title">QR Code</string>
     <string name="scan_qr_title">Scan QR</string>
