@@ -25,6 +25,9 @@
         <action
             android:id="@+id/action_TaskList_to_ScanQr"
             app:destination="@id/ScanQrFragment" />
+        <action
+            android:id="@+id/action_TaskList_to_QrDisplay"
+            app:destination="@id/QrDisplayFragment" />
     </fragment>
 
     <fragment

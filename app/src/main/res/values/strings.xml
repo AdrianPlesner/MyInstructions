@@ -63,6 +63,7 @@
     <string name="qr_payload_too_large">Too many tasks to fit in a single QR code. Select fewer tasks.</string>
     <string name="import_done">%d task(s) imported</string>
     <string name="assign_categories_label">Assign to categories</string>
+    <string name="share_qr">Share QR</string>
     <string name="select_all_in_category">Select all</string>
     <string name="selected_count">%d selected</string>
     <string name="exit_selection">Exit selection</string>
