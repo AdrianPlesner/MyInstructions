@@ -7,11 +7,13 @@ import com.example.myinstructions.data.AppDatabase
 import com.example.myinstructions.data.entity.CategoryEntity
 import com.example.myinstructions.data.repository.CategoryRepository
 import com.example.myinstructions.data.repository.TaskRepository
+import com.example.myinstructions.ui.share.ShareableTask
 import com.example.myinstructions.util.ImageStorageHelper
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 enum class SortMode { CATEGORY, RECENT }
@@ -263,6 +265,25 @@ class TaskListViewModel(application: Application) : AndroidViewModel(application
             }
             exitSelectionMode()
         }
+    }
+
+    /**
+     * Builds [ShareableTask] objects for every currently selected task,
+     * preserving instruction order. Call from a coroutine scope.
+     */
+    suspend fun buildShareableTasksForSelected(): List<ShareableTask> {
+        val ids = _selectedTaskIds.value
+        return repository.getAllTasksWithInstructions()
+            .first()
+            .filter { it.task.id in ids }
+            .map { twi ->
+                ShareableTask(
+                    name = twi.task.name,
+                    instructions = twi.instructions
+                        .sortedBy { it.orderIndex }
+                        .map { it.text }
+                )
+            }
     }
 
     companion object {

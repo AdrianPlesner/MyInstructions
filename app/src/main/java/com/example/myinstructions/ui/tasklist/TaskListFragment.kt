@@ -18,8 +18,10 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
+import android.widget.Toast
 import com.example.myinstructions.R
 import com.example.myinstructions.databinding.FragmentTaskListBinding
+import com.example.myinstructions.util.QrCodeHelper
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.launch
 
@@ -151,6 +153,17 @@ class TaskListFragment : Fragment() {
 
         binding.buttonAssignCategories.setOnClickListener {
             showAssignCategoriesDialog()
+        }
+
+        binding.buttonShareQr.setOnClickListener {
+            viewLifecycleOwner.lifecycleScope.launch {
+                val tasks = viewModel.buildShareableTasksForSelected()
+                if (tasks.isEmpty()) return@launch
+                val json = QrCodeHelper.toJson(tasks)
+                val bundle = Bundle().apply { putString("tasksJson", json) }
+                viewModel.exitSelectionMode()
+                findNavController().navigate(R.id.action_TaskList_to_QrDisplay, bundle)
+            }
         }
 
         // Observe list items
